@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: rmi-tracing
+  name: rmi-client
+  labels:
+    app: rmi-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rmi-client
+  template:
+    metadata:
+      labels:
+        app: rmi-client
+    spec:
+      containers:
+      - name: rmi-client
+        image: rcskin/rmi-client:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: RMI_SERVICE_B_URL
+          valueFrom:
+            configMapKeyRef:
+              name: rmi-tracing-config
+              key: RMI_SERVICE_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rmi-client
+spec:
+  selector:
+    app: rmi-client
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP

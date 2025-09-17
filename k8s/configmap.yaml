@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: rmi-tracing
+  name: rmi-tracing-config
+data:
+  RMI_SERVICE_B_URL: "rmi://rmi-server:1099/UserService"

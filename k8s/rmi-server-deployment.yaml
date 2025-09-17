@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: rmi-tracing
+  name: rmi-server
+  labels:
+    app: rmi-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rmi-server
+  template:
+    metadata:
+      labels:
+        app: rmi-server
+    spec:
+      containers:
+      - name: rmi-server
+        image: rcskin/rmi-server:latest
+        ports:
+        - name: http
+          containerPort: 8081
+        - name: rmi
+          containerPort: 1099
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rmi-server
+spec:
+  selector:
+    app: rmi-server
+  ports:
+  - name: http
+    port: 8081
+    targetPort: 8081
+  - name: rmi
+    port: 1099
+    targetPort: 1099
+  type: ClusterIP
