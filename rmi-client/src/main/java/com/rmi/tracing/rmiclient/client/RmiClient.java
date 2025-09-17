@@ -9,7 +9,7 @@ import java.rmi.Naming;
 @Component
 public class RmiClient {
     //How do we connect 
-    @Value("${RMI_SERVICE_B_URL:rmi://rmi-server:1099/UserService}")
+    @Value("${RMI_SERVER_URL:rmi://rmi-server:1099/UserService}")
     private String serviceBUrl;
 
     public void updateUser(String userId, String userData) throws Exception {

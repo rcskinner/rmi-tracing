@@ -21,11 +21,11 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        - name: RMI_SERVICE_B_URL
+        - name: RMI_SERVER_URL
           valueFrom:
             configMapKeyRef:
               name: rmi-tracing-config
-              key: RMI_SERVICE_URL
+              key: RMI_SERVER_URL
 ---
 apiVersion: v1
 kind: Service
