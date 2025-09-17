@@ -1,12 +1,9 @@
 package com.rmi.tracing.rmiserver.service;
 
 import com.rmi.tracing.UserService;
-import org.springframework.stereotype.Service;
-
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-@Service
 public class UserServiceImpl extends UnicastRemoteObject implements UserService {
 
     public UserServiceImpl() throws RemoteException {

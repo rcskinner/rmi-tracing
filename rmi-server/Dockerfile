@@ -23,6 +23,6 @@ WORKDIR /app
 
 COPY --from=build /app/rmi-server/target/rmi-server-1.0.0.jar app.jar
 
-EXPOSE 8081 1099
+EXPOSE 1099
 
 CMD ["java", "-jar", "app.jar"]
