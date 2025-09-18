@@ -20,4 +20,22 @@ public class RmiClient {
             throw new Exception("Failed to call Service B via RMI: " + e.getMessage(), e);
         }
     }
+
+    public String getUser(String userId) throws Exception {
+        try {
+            UserService userService = (UserService) Naming.lookup(serviceBUrl);
+            return userService.getUser(userId);
+        } catch (Exception e) {
+            throw new Exception("Failed to get user via RMI: " + e.getMessage(), e);
+        }
+    }
+
+    public String getAllUsers() throws Exception {
+        try {
+            UserService userService = (UserService) Naming.lookup(serviceBUrl);
+            return userService.getAllUsers();
+        } catch (Exception e) {
+            throw new Exception("Failed to get all users via RMI: " + e.getMessage(), e);
+        }
+    }
 }

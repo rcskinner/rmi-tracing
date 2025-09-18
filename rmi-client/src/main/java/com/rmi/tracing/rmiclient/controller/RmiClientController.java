@@ -29,4 +29,22 @@ public class RmiClientController {
             return "Error adding user: " + e.getMessage();
         }
     }
+
+    @GetMapping("/get-users")
+    public String getAllUsers() {
+        try {
+            return rmiClient.getAllUsers();
+        } catch (Exception e) {
+            return "{\"error\": \"Failed to retrieve users: " + e.getMessage() + "\"}";
+        }
+    }
+
+    @GetMapping("/get-user/{userId}")
+    public String getUser(@PathVariable String userId) {
+        try {
+            return rmiClient.getUser(userId);
+        } catch (Exception e) {
+            return "{\"error\": \"Failed to retrieve user: " + e.getMessage() + "\"}";
+        }
+    }
 }
