@@ -21,6 +21,17 @@ spec:
         ports:
         - name: rmi
           containerPort: 1099
+        env:
+        - name: SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: rmi-tracing-config
+              key: SERVER_SERVER_PORT
+        - name: SPRING_APPLICATION_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: rmi-tracing-config
+              key: SERVER_APP_NAME
 ---
 apiVersion: v1
 kind: Service

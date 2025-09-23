@@ -26,6 +26,16 @@ spec:
             configMapKeyRef:
               name: rmi-tracing-config
               key: RMI_SERVER_URL
+        - name: SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: rmi-tracing-config
+              key: CLIENT_SERVER_PORT
+        - name: SPRING_APPLICATION_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: rmi-tracing-config
+              key: CLIENT_APP_NAME
 ---
 apiVersion: v1
 kind: Service
