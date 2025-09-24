@@ -20,14 +20,15 @@ kubectl apply -f k8s/
 
 2. Test the services:
 ```bash
-# Port forward RMI Client
-kubectl port-forward service/rmi-client 8080:8080
+# Access RMI Client via NodePort (or use port-forward)
+# NodePort: http://localhost:30090
+# Or port-forward: kubectl port-forward service/rmi-client 8080:8080
 
 # Test hello endpoint
-curl http://localhost:8080/api/hello
+curl http://localhost:30090/api/hello
 
 # Test RMI call
-curl -X POST 'http://localhost:8080/api/add-user?userId=123&userData=test'
+curl -X POST 'http://localhost:30090/api/add-user?userId=123&userData=test'
 ```
 
 ## Project Structure
@@ -42,5 +43,11 @@ curl -X POST 'http://localhost:8080/api/add-user?userId=123&userData=test'
 
 ## Services
 
-- **RMI Client**: Port 8080
-- **RMI Server**: Port 8081 (HTTP), Port 1099 (RMI)
+- **RMI Client**: 
+  - Container Port: 8080
+  - NodePort: 30090 (HTTP)
+  - Debug Port: 30091 (for remote debugging)
+- **RMI Server**: 
+  - Container Port: 1099 (RMI)
+  - NodePort: 30092 (RMI)
+  - Debug Port: 30093 (for remote debugging)
