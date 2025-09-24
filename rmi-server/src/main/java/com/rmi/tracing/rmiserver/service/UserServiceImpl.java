@@ -3,17 +3,13 @@ package com.rmi.tracing.rmiserver.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rmi.tracing.UserService;
 import com.rmi.tracing.TraceContext;
+import com.rmi.tracing.utils.TracingUtils;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.HashMap;
 import io.opentracing.Span;
-import io.opentracing.SpanContext;
-import io.opentracing.Tracer;
-import io.opentracing.util.GlobalTracer;
-import io.opentracing.propagation.Format;
-import io.opentracing.propagation.TextMapAdapter;
 
 public class UserServiceImpl extends UnicastRemoteObject implements UserService {
     
@@ -26,38 +22,14 @@ public class UserServiceImpl extends UnicastRemoteObject implements UserService 
         super();
     }
 
-    /**
-     * Extract trace context from TraceContext and continue the distributed trace
-     */
-    private Span continueTraceContext(TraceContext traceContext, String operationName) {
-        Tracer tracer = GlobalTracer.get();
-        
-        if (traceContext == null || traceContext.isEmpty()) {
-            // No trace context provided, create a new root span
-            return tracer.buildSpan(operationName).start();
-        }
-        
-        // Extract the trace context from the map
-        Map<String, String> contextMap = traceContext.getContextMap();
-        SpanContext spanContext = tracer.extract(Format.Builtin.TEXT_MAP, new TextMapAdapter(contextMap));
-        
-        if (spanContext != null) {
-            // Continue the existing trace
-            return tracer.buildSpan(operationName)
-                    .asChildOf(spanContext)
-                    .start();
-        } else {
-            // Failed to extract context, create new root span
-            return tracer.buildSpan(operationName).start();
-        }
-    }
 
     @Override
     public void updateUser(String userId, String userData, TraceContext traceContext) throws RemoteException {
-        Span span = continueTraceContext(traceContext, "rmi.updateUser");
         try {
-            span.setTag("user.id", userId);
-            span.setTag("operation", "updateUser");
+            Span span = TracingUtils.continueTraceContext(traceContext, "rmi.updateUser");
+            if (span != null) {
+                span.setTag("user.id", userId);
+            }
             
             System.out.println("RMI Call received - User ID: " + userId + ", Data: " + userData);
             users.put(userId, userData);
@@ -66,61 +38,67 @@ public class UserServiceImpl extends UnicastRemoteObject implements UserService 
             // Process user data with our instrumentable function
             userDataProcessor.processUserData(userId);
             
-            span.setTag("success", true);
+            if (span != null) {
+                span.finish();
+            }
         } catch (Exception e) {
-            span.setTag("error", true);
-            span.setTag("error.message", e.getMessage());
-            throw e;
-        } finally {
-            span.finish();
+            throw new RemoteException("Error updating user: " + e.getMessage(), e);
         }
     }
 
     @Override
     public String getUser(String userId, TraceContext traceContext) throws RemoteException {
-        Span span = continueTraceContext(traceContext, "rmi.getUser");
         try {
-            span.setTag("user.id", userId);
-            span.setTag("operation", "getUser");
+            Span span = TracingUtils.continueTraceContext(traceContext, "rmi.getUser");
+            if (span != null) {
+                span.setTag("user.id", userId);
+            }
             
             String userData = users.get(userId);
             if (userData == null) {
-                span.setTag("user.found", false);
-                span.setTag("success", true);
+                if (span != null) {
+                    span.setTag("user.found", false);
+                }
+                if (span != null) {
+                    span.finish();
+                }
                 return "{\"error\": \"User not found\", \"id\": \"" + userId + "\"}";
             }
             
-            span.setTag("user.found", true);
-            span.setTag("success", true);
+            if (span != null) {
+                span.setTag("user.found", true);
+                span.finish();
+            }
             return "{\"id\": \"" + userId + "\", \"data\": \"" + userData + "\"}";
         } catch (Exception e) {
-            span.setTag("error", true);
-            span.setTag("error.message", e.getMessage());
-            throw e;
-        } finally {
-            span.finish();
+            throw new RemoteException("Error getting user: " + e.getMessage(), e);
         }
     }
 
     @Override
     public String getAllUsers(TraceContext traceContext) throws RemoteException {
-        Span span = continueTraceContext(traceContext, "rmi.getAllUsers");
         try {
-            span.setTag("operation", "getAllUsers");
-            span.setTag("user.count", users.size());
+            Span span = TracingUtils.continueTraceContext(traceContext, "rmi.getAllUsers");
+            if (span != null) {
+                span.setTag("user.count", users.size());
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("users", users);
-            String result = objectMapper.writeValueAsString(response);
-            
-            span.setTag("success", true);
-            return result;
+            try {
+                String result = objectMapper.writeValueAsString(response);
+                if (span != null) {
+                    span.finish();
+                }
+                return result;
+            } catch (Exception e) {
+                if (span != null) {
+                    span.finish();
+                }
+                throw new RuntimeException("Error serializing users to JSON: " + e.getMessage(), e);
+            }
         } catch (Exception e) {
-            span.setTag("error", true);
-            span.setTag("error.message", e.getMessage());
-            throw new RemoteException("Error serializing users to JSON: " + e.getMessage(), e);
-        } finally {
-            span.finish();
+            throw new RemoteException("Error getting all users: " + e.getMessage(), e);
         }
     }
 
