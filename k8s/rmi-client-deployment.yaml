@@ -21,7 +21,17 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
+        # Debug port for remote debugging from VS Code
+        - containerPort: 5006
+          name: debug
         env:
+        # Enable Java Debug Wire Protocol (JDWP) for remote debugging
+        # - transport=dt_socket: Use socket transport
+        # - server=y: Act as debug server (accept connections)
+        # - suspend=n: Don't suspend on startup (start normally)
+        # - address=*:5006: Listen on all interfaces on port 5006
+        - name: JAVA_TOOL_OPTIONS
+          value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
         - name: RMI_SERVER_URL
           valueFrom:
             configMapKeyRef:
@@ -46,7 +56,14 @@ spec:
   selector:
     app: rmi-client
   ports:
-  - port: 8080
+  # Application port
+  - name: http
+    port: 8080
     targetPort: 8080
-    nodePort: 30080
+    nodePort: 30090
+  # Debug port for remote debugging (exposed via NodePort for convenience)
+  - name: debug
+    port: 5006
+    targetPort: 5006
+    nodePort: 30091
   type: NodePort
