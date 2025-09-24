@@ -13,6 +13,7 @@ public class UserServiceImpl extends UnicastRemoteObject implements UserService 
     // Store users in memory using ConcurrentHashMap for thread safety
     private final Map<String, String> users = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserDataProcessor userDataProcessor = new UserDataProcessor();
 
     public UserServiceImpl() throws RemoteException {
         super();
@@ -23,6 +24,9 @@ public class UserServiceImpl extends UnicastRemoteObject implements UserService 
         System.out.println("RMI Call received - User ID: " + userId + ", Data: " + userData);
         users.put(userId, userData);
         System.out.println("User stored in memory. Total users: " + users.size());
+        
+        // Process user data with our instrumentable function
+        userDataProcessor.processUserData(userId);
     }
 
     @Override
@@ -44,4 +48,5 @@ public class UserServiceImpl extends UnicastRemoteObject implements UserService 
             throw new RemoteException("Error serializing users to JSON: " + e.getMessage(), e);
         }
     }
+
 }
