@@ -1,12 +1,9 @@
 package com.rmi.tracing.rmiclient.controller;
 
-import com.rmi.tracing.UserService;
 import com.rmi.tracing.rmiclient.client.RmiClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.rmi.Naming;
-import java.rmi.RemoteException;
 
 @RestController
 @RequestMapping("/api")

@@ -32,6 +32,11 @@
             <artifactId>rmi-interface</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.rmi.tracing</groupId>
+            <artifactId>rmi-tracing-utils</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!-- Datadog APM Dependencies -->
         <dependency>
             <groupId>io.opentracing</groupId>
