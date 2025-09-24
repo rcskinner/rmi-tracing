@@ -18,6 +18,7 @@ spec:
       containers:
       - name: rmi-client
         image: rcskin/rmi-client:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         env:
@@ -47,4 +48,5 @@ spec:
   ports:
   - port: 8080
     targetPort: 8080
-  type: ClusterIP
+    nodePort: 30080
+  type: NodePort

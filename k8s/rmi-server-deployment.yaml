@@ -18,6 +18,7 @@ spec:
       containers:
       - name: rmi-server
         image: rcskin/rmi-server:latest
+        imagePullPolicy: Always
         ports:
         - name: rmi
           containerPort: 1099
