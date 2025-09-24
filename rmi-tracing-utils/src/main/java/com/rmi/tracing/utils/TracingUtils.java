@@ -9,91 +9,86 @@ import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMapAdapter;
 
 import java.util.Map;
-import java.util.function.Function;
+import java.util.HashMap;
 
 /**
  * Utility class for handling distributed tracing in RMI services.
- * This class provides reusable methods for trace context extraction and
- * business logic execution with automatic tracing.
+ * Provides core functionality for trace context extraction and span creation.
  */
 public class TracingUtils {
 
     /**
-     * Extract trace context from TraceContext and continue the distributed trace
+     * Extract trace context from TraceContext and continue the distributed trace.
+     * Returns null if tracing is not available or fails, ensuring service continues to work.
      * @param traceContext The trace context from the RMI call
      * @param operationName The name of the operation for the span
-     * @return A new span that continues the distributed trace
+     * @return A new span that continues the distributed trace, or null if tracing fails
      */
     public static Span continueTraceContext(TraceContext traceContext, String operationName) {
-        Tracer tracer = GlobalTracer.get();
-        
-        if (traceContext == null || traceContext.isEmpty()) {
+        try {
+            Tracer tracer = GlobalTracer.get();
+            
+            // Check if tracer is available
+            if (tracer == null) {
+                System.err.println("Warning: No tracer available, continuing without tracing");
+                return null;
+            }
+            
             // No trace context provided, create a new root span
-            return tracer.buildSpan(operationName).start();
-        }
-        
-        // Extract the trace context from the map
-        Map<String, String> contextMap = traceContext.getContextMap();
-        SpanContext spanContext = tracer.extract(Format.Builtin.TEXT_MAP, new TextMapAdapter(contextMap));
-        
-        if (spanContext != null) {
-            // Continue the existing trace
-            return tracer.buildSpan(operationName)
-                    .asChildOf(spanContext)
-                    .start();
-        } else {
-            // Failed to extract context, create new root span
-            return tracer.buildSpan(operationName).start();
+            if (traceContext == null || traceContext.isEmpty()) {
+                return tracer.buildSpan(operationName).start();
+            }
+            
+            // Extract the trace context from the map
+            Map<String, String> contextMap = traceContext.getContextMap();
+            SpanContext spanContext = tracer.extract(Format.Builtin.TEXT_MAP, new TextMapAdapter(contextMap));
+            
+            // Continue the existing trace            
+            if (spanContext != null) {
+                return tracer.buildSpan(operationName)
+                        .asChildOf(spanContext)
+                        .start();
+            } else {
+                // Failed to extract context, create new root span
+                return tracer.buildSpan(operationName).start();
+            }
+        } catch (Exception e) {
+            // Log the error but don't break the service
+            System.err.println("Warning: Failed to create span for operation '" + operationName + "': " + e.getMessage());
+            return null;
         }
     }
 
     /**
-     * Helper method to wrap business logic with tracing boilerplate.
-     * This method handles span creation, tagging, error handling, and cleanup.
-     * 
-     * @param traceContext The trace context from the RMI call
-     * @param operationName The name of the operation for the span
-     * @param businessLogic The business logic to execute, receives the span for custom tagging
-     * @param <T> The return type of the business logic
-     * @return The result from the business logic
-     * @throws Exception Any exception thrown by the business logic
+     * Extract trace context from current active span for RMI propagation.
+     * Returns empty TraceContext if no active span or tracing fails.
+     * @return TraceContext containing current span context, or empty context if none available
      */
-    public static <T> T executeWithTracing(TraceContext traceContext, String operationName, Function<Span, T> businessLogic) throws Exception {
-        Span span = continueTraceContext(traceContext, operationName);
+    public static TraceContext extractTraceContext() {
         try {
-            span.setTag("operation", operationName);
-            T result = businessLogic.apply(span);
-            span.setTag("success", true);
-            return result;
+            Tracer tracer = GlobalTracer.get();
+            
+            // Check if tracer is available
+            if (tracer == null) {
+                System.err.println("Warning: No tracer available, returning empty trace context");
+                return new TraceContext();
+            }
+            
+            Span currentSpan = tracer.activeSpan();
+            if (currentSpan == null) {
+                // No active span, return empty context
+                return new TraceContext();
+            }
+            
+            // Inject the current span context into a map
+            Map<String, String> contextMap = new HashMap<>();
+            tracer.inject(currentSpan.context(), Format.Builtin.TEXT_MAP, new TextMapAdapter(contextMap));
+            return new TraceContext(contextMap);
+            
         } catch (Exception e) {
-            span.setTag("error", true);
-            span.setTag("error.message", e.getMessage());
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
-    /**
-     * Helper method for void operations that don't return a value.
-     * 
-     * @param traceContext The trace context from the RMI call
-     * @param operationName The name of the operation for the span
-     * @param businessLogic The business logic to execute, receives the span for custom tagging
-     * @throws Exception Any exception thrown by the business logic
-     */
-    public static void executeWithTracing(TraceContext traceContext, String operationName, java.util.function.Consumer<Span> businessLogic) throws Exception {
-        Span span = continueTraceContext(traceContext, operationName);
-        try {
-            span.setTag("operation", operationName);
-            businessLogic.accept(span);
-            span.setTag("success", true);
-        } catch (Exception e) {
-            span.setTag("error", true);
-            span.setTag("error.message", e.getMessage());
-            throw e;
-        } finally {
-            span.finish();
+            // Log the error but don't break the service
+            System.err.println("Warning: Failed to extract trace context: " + e.getMessage());
+            return new TraceContext();
         }
     }
 }
