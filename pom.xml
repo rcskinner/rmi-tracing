@@ -18,6 +18,7 @@
 
     <modules>
         <module>rmi-interface</module>
+        <module>rmi-tracing-utils</module>
         <module>rmi-client</module>
         <module>rmi-server</module>
     </modules>
