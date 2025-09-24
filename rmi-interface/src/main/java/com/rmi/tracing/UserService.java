@@ -4,7 +4,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface UserService extends Remote {
-    void updateUser(String userId, String userData) throws RemoteException;
-    String getUser(String userId) throws RemoteException;
-    String getAllUsers() throws RemoteException;
+    void updateUser(String userId, String userData, TraceContext traceContext) throws RemoteException;
+    String getUser(String userId, TraceContext traceContext) throws RemoteException;
+    String getAllUsers(TraceContext traceContext) throws RemoteException;
 }
