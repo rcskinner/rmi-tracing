@@ -10,25 +10,68 @@ import java.util.HashMap;
 public class TraceContext implements Serializable {
     private static final long serialVersionUID = 1L;
     
-    private Map<String, String> contextMap;
+    private String traceId;
+    private String spanId;
+    private String parentSpanId;
+    private boolean sampled;
+    private Map<String, String> baggage;
     
     public TraceContext() {
-        this.contextMap = new HashMap<>();
+        this.baggage = new HashMap<>();
     }
     
-    public TraceContext(Map<String, String> contextMap) {
-        this.contextMap = contextMap != null ? new HashMap<>(contextMap) : new HashMap<>();
+    public TraceContext(String traceId, String spanId, String parentSpanId, boolean sampled, Map<String, String> baggage) {
+        this.traceId = traceId;
+        this.spanId = spanId;
+        this.parentSpanId = parentSpanId;
+        this.sampled = sampled;
+        this.baggage = baggage != null ? new HashMap<>(baggage) : new HashMap<>();
     }
     
-    public Map<String, String> getContextMap() {
-        return contextMap;
+    // Getters
+    public String getTraceId() {
+        return traceId;
     }
     
-    public void setContextMap(Map<String, String> contextMap) {
-        this.contextMap = contextMap != null ? new HashMap<>(contextMap) : new HashMap<>();
+    public String getSpanId() {
+        return spanId;
+    }
+    
+    public String getParentSpanId() {
+        return parentSpanId;
+    }
+    
+    public boolean isSampled() {
+        return sampled;
+    }
+    
+    public Map<String, String> getBaggage() {
+        return baggage;
+    }
+    
+    // Setters
+    public void setTraceId(String traceId) {
+        this.traceId = traceId;
+    }
+    
+    public void setSpanId(String spanId) {
+        this.spanId = spanId;
+    }
+    
+    public void setParentSpanId(String parentSpanId) {
+        this.parentSpanId = parentSpanId;
+    }
+    
+    public void setSampled(boolean sampled) {
+        this.sampled = sampled;
+    }
+    
+    public void setBaggage(Map<String, String> baggage) {
+        this.baggage = baggage != null ? new HashMap<>(baggage) : new HashMap<>();
     }
     
     public boolean isEmpty() {
-        return contextMap == null || contextMap.isEmpty();
+        return traceId == null && spanId == null && parentSpanId == null && 
+               (baggage == null || baggage.isEmpty());
     }
 }

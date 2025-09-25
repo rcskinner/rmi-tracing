@@ -1,6 +1,5 @@
-package com.rmi.tracing.utils;
+package com.rmi.tracing;
 
-import com.rmi.tracing.TraceContext;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
@@ -30,7 +29,7 @@ public class TracingUtils {
             
             // Check if tracer is available
             if (tracer == null) {
-                System.err.println("Warning: No tracer available, continuing without tracing");
+                System.err.println("Warning: No tracer available for operation '" + operationName + "'");
                 return null;
             }
             
@@ -39,17 +38,35 @@ public class TracingUtils {
                 return tracer.buildSpan(operationName).start();
             }
             
-            // Extract the trace context from the map
-            Map<String, String> contextMap = traceContext.getContextMap();
+            // Extract trace information for span tags
+            String traceId = traceContext.getTraceId();
+            String parentSpanId = traceContext.getParentSpanId();
+            boolean sampled = traceContext.isSampled();
+            
+            // Extract the trace context from the baggage map
+            Map<String, String> contextMap = traceContext.getBaggage();
             SpanContext spanContext = tracer.extract(Format.Builtin.TEXT_MAP, new TextMapAdapter(contextMap));
             
             // Continue the existing trace            
             if (spanContext != null) {
-                return tracer.buildSpan(operationName)
+                Span span = tracer.buildSpan(operationName)
                         .asChildOf(spanContext)
                         .start();
+                
+                // Add trace metadata as span tags for better observability
+                if (traceId != null) {
+                    span.setTag("trace.id", traceId);
+                }
+                if (parentSpanId != null) {
+                    span.setTag("parent.span.id", parentSpanId);
+                }
+                span.setTag("trace.sampled", sampled);
+                span.setTag("trace.source", "rmi");
+                
+                return span;
             } else {
                 // Failed to extract context, create new root span
+                System.err.println("Warning: Failed to extract span context from baggage, creating new root span");
                 return tracer.buildSpan(operationName).start();
             }
         } catch (Exception e) {
@@ -80,10 +97,21 @@ public class TracingUtils {
                 return new TraceContext();
             }
             
-            // Inject the current span context into a map
+            // Extract individual trace fields from the current span
+            SpanContext spanContext = currentSpan.context();
+            String traceId = spanContext.toTraceId();
+            String spanId = spanContext.toSpanId();
+            String parentSpanId = null; // OpenTracing doesn't provide direct parent span ID access
+            
+            // Determine sampling decision - assume sampled if we have an active span
+            boolean sampled = true;
+            
+            // Inject the current span context into a map for baggage
             Map<String, String> contextMap = new HashMap<>();
-            tracer.inject(currentSpan.context(), Format.Builtin.TEXT_MAP, new TextMapAdapter(contextMap));
-            return new TraceContext(contextMap);
+            tracer.inject(spanContext, Format.Builtin.TEXT_MAP, new TextMapAdapter(contextMap));
+            
+            // Create TraceContext with all individual fields populated
+            return new TraceContext(traceId, spanId, parentSpanId, sampled, contextMap);
             
         } catch (Exception e) {
             // Log the error but don't break the service
@@ -92,4 +120,3 @@ public class TracingUtils {
         }
     }
 }
-

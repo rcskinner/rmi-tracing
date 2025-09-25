@@ -2,7 +2,7 @@ package com.rmi.tracing.rmiclient.client;
 
 import com.rmi.tracing.UserService;
 import com.rmi.tracing.TraceContext;
-import com.rmi.tracing.utils.TracingUtils;
+import com.rmi.tracing.TracingUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

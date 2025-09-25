@@ -3,7 +3,7 @@ package com.rmi.tracing.rmiserver.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rmi.tracing.UserService;
 import com.rmi.tracing.TraceContext;
-import com.rmi.tracing.utils.TracingUtils;
+import com.rmi.tracing.TracingUtils;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ConcurrentHashMap;
